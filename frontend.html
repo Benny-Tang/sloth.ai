@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sloth AI - Compliance Monitoring</title>
+<style>
+:root{--bg:#062b2e;--surface:#0d3d40;--border:#1a5257;--accent:#2dd4bf;--danger:#ef4444;--warn:#f59e0b;--success:#22c55e;--text:#e6fffa;--muted:#7dd3c0;--font:'IBM Plex Mono','Courier New',monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
+header{border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:14px;}
+.logo{width:44px;height:44px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.brand{font-size:18px;font-weight:600;letter-spacing:0.05em;}
+.tagline{font-size:11px;color:var(--muted);}
+.hdr-right{margin-left:auto;}
+.badge{font-size:11px;padding:4px 10px;border:1px solid var(--success);color:var(--success);border-radius:4px;}
+main{max-width:1000px;margin:0 auto;padding:24px;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em;}
+.stat-value{font-size:22px;font-weight:600;}
+.controls{margin-bottom:24px;}
+btn{font-family:var(--font);font-size:13px;padding:10px 18px;border-radius:6px;cursor:pointer;border:1px solid var(--accent);background:#0d3d4030;color:var(--accent);}
+btn:hover{background:#2dd4bf20;}
+.alerts{display:flex;flex-direction:column;gap:12px;}
+.alert-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;}
+.alert-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-weight:600;}
+.sev{font-size:10px;padding:3px 9px;border-radius:4px;margin-left:auto;}
+.sev.LOW{background:#22c55e1a;color:var(--success);}
+.sev.MEDIUM{background:#f59e0b1a;color:var(--warn);}
+.sev.HIGH,.sev.CRITICAL{background:#ef44441a;color:var(--danger);}
+.alert-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px;}
+.alert-action{font-size:12px;background:var(--accent);color:#062b2e;padding:8px 14px;border-radius:6px;display:inline-block;font-weight:600;}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:40px 0;}
+footer{text-align:center;padding:24px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:24px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">ðŸ¦¥</div>
+  <div>
+    <div class="brand">SLOTH AI</div>
+    <div class="tagline">Cross-border regulatory & tax compliance, monitored in real time</div>
+  </div>
+  <div class="hdr-right"><span class="badge">&#x25CF; ONLINE</span></div>
+</header>
+<main>
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Jurisdictions Monitored</div><div class="stat-value" id="stat-juris">â€”</div></div>
+    <div class="stat"><div class="stat-label">Active Alerts</div><div class="stat-value" id="stat-alerts">â€”</div></div>
+    <div class="stat"><div class="stat-label">Scan Status</div><div class="stat-value" id="stat-status">â€”</div></div>
+  </div>
+  <div class="controls">
+    <btn onclick="runScan()">&#x1F50D; Run Compliance Scan</btn>
+  </div>
+  <div class="alerts" id="alerts">
+    <div class="empty">Click "Run Compliance Scan" to check for regulatory changes.</div>
+  </div>
+</main>
+<footer>Sloth AI â€” At scale, in real time. Fintech/Regtech hackathon build.</footer>
+<script>
+async function runScan(){
+  document.getElementById('alerts').innerHTML='<div class="empty">Scanning regulatory sources...</div>';
+  try{
+    const r=await fetch('/api/alerts');
+    const d=await r.json();
+    document.getElementById('stat-status').textContent=(d.scan_status||'â€”').toUpperCase();
+    const alerts=d.alerts||[];
+    document.getElementById('stat-alerts').textContent=alerts.length;
+    const jurisdictions=new Set(alerts.map(a=>a.jurisdiction).filter(Boolean));
+    document.getElementById('stat-juris').textContent=jurisdictions.size||'â€”';
+    if(alerts.length===0){
+      document.getElementById('alerts').innerHTML='<div class="empty">No alerts â€” all monitored jurisdictions nominal.</div>';
+      return;
+    }
+    document.getElementById('alerts').innerHTML=alerts.map(a=>
+      '<div class="alert-card">'+
+        '<div class="alert-head">'+(a.jurisdiction||'Unknown')+
+        '<span class="sev '+(a.severity||'LOW')+'">'+(a.severity||'LOW')+'</span></div>'+
+        '<div class="alert-desc">'+(a.description||a.headline||'')+'</div>'+
+        '<div class="alert-action">'+(a.recommended_action||'Review')+'</div>'+
+      '</div>'
+    ).join('');
+  }catch(e){
+    document.getElementById('alerts').innerHTML='<div class="empty">Scan failed: '+e.message+'</div>';
+  }
+}
+</script>
+</body>
+</html>
